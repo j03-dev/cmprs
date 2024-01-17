@@ -1,7 +1,6 @@
 /*
  * Codage de huffman by joe
  */
-mod cli;
 mod node;
 
 use crate::node::Node;
