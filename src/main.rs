@@ -1,6 +1,7 @@
 /*
  * Codage de huffman by joe
  */
+mod cli;
 mod node;
 
 use crate::node::Node;
@@ -21,19 +22,16 @@ fn find_most_occurences(msg: String) -> Vec<Node> {
     let mut letter_occurences: HashMap<String, i32> = HashMap::new();
 
     for l in msg.chars() {
-        if l.is_alphabetic() {
-            let value = letter_occurences.get(&l.to_string()).unwrap_or(&0) + 1;
-            letter_occurences.insert(l.to_string(), value);
-        }
+        let value = letter_occurences.get(&l.to_string()).unwrap_or(&0) + 1;
+        letter_occurences.insert(l.to_string(), value);
     }
 
     let mut nodes = letter_occurences
         .iter()
-        .map(|(a, b)| Node {
-            left: None,
-            right: None,
-            data: Some(a.clone()),
-            occurence: *b,
+        .map(|(key, value)| Node {
+            data: Some(key.clone()),
+            occurence: *value,
+            ..Default::default()
         })
         .collect::<Vec<_>>();
     nodes.sort_by(|a, b| a.occurence.cmp(&b.occurence));
@@ -64,8 +62,8 @@ fn make_huffman_tree(nodes: Vec<Node>) -> Node {
 }
 
 fn main() {
-    let out = file_reader("/mnt/d/Project/cmprs/message.txt");
-    let nodes = find_most_occurences(out);
+    let mut out = file_reader("/mnt/d/Project/cmprs/message.txt");
+    let nodes = find_most_occurences(out.clone());
     let tree = make_huffman_tree(nodes.clone());
 
     for n in nodes.iter() {
@@ -77,7 +75,7 @@ fn main() {
             .map(|v| v.to_string())
             .collect::<Vec<_>>()
             .join("");
-
-        println!("{target:?} {code:?}");
+        out = out.replace(&target, &code);
     }
+    println!("{out}");
 }
