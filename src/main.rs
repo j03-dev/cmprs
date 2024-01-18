@@ -65,15 +65,14 @@ fn main() {
     let nodes = find_most_occurences(out.clone());
     let tree = make_huffman_tree(nodes.clone());
 
-    for n in nodes.iter() {
-        let target = n.data.clone().unwrap();
-        let code = tree
+    for node in nodes.iter() {
+        let target = node.data.clone().unwrap();
+        let code: String = tree
             .search(&target, &mut vec![])
             .unwrap()
             .iter()
             .map(|v| v.to_string())
-            .collect::<Vec<_>>()
-            .join("");
+            .collect();
         out = out.replace(&target, &code);
     }
     println!("{out}");
