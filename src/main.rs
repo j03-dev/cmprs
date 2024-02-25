@@ -56,30 +56,18 @@ fn make_huffman_tree(nodes: Vec<Node>) -> Node {
 
 // Encode the input text using the Huffman tree
 fn encode_text(text: &str, tree: &Node) -> String {
-    let mut dictionary: HashMap<String, String> = HashMap::new();
-
+    let mut output = String::new();
     for char in text.chars() {
         let target = char.to_string();
         let code: String = tree
-            .search(&target, &mut vec![])
+            .search(&target, &mut Vec::new())
             .unwrap()
             .iter()
             .map(|&b| b.to_string())
             .collect();
-        dictionary.insert(target, code);
+        output.push_str(&code);
     }
-
-    let mut result = String::new();
-
-    println!("{dictionary:#?}");
-
-    for char in text.chars() {
-        if let Some(code) = dictionary.get(&char.to_string()) {
-            result.push_str(code)
-        }
-    }
-
-    result
+    output
 }
 
 fn write_as_binary(input: &str, output_path: &str) -> Result<(), std::io::Error> {
