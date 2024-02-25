@@ -7,12 +7,12 @@ pub struct Node {
 }
 
 impl Node {
-    pub fn add(&self, node: Box<Node>) -> Self {
+    pub fn add(left: Node, right: Node) -> Self {
         Self {
-            left: Some(Box::new(self.clone())),
-            right: Some(node.clone()),
+            left: Some(Box::new(left.clone())),
+            right: Some(Box::new(right.clone())),
             data: None,
-            occurence: self.occurence + node.occurence,
+            occurence: left.occurence + right.occurence,
         }
     }
 

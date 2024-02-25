@@ -2,78 +2,136 @@
  * Codage de huffman by joe
  */
 mod node;
+use node::Node;
+use std::{
+    collections::HashMap,
+    env,
+    fs::File,
+    io::{BufReader, BufWriter, Read, Write},
+    process,
+};
 
-use crate::node::Node;
-
-use std::collections::HashMap;
-use std::fs::File;
-use std::io::Read;
-
-fn file_reader(path: &str) -> String {
-    let mut output = String::new();
-    let mut file = File::open(path).expect("File not found");
-    file.read_to_string(&mut output)
-        .expect("Failed to read to string the file");
-    output
+fn file_reader(path: &str) -> Result<String, std::io::Error> {
+    let file = File::open(path)?;
+    let mut reader = BufReader::new(file);
+    let mut content = String::new();
+    reader.read_to_string(&mut content)?;
+    Ok(content)
 }
 
-fn find_most_occurences(msg: String) -> Vec<Node> {
-    let mut letter_occurences: HashMap<String, i32> = HashMap::new();
+// Calculate the occurrences of each character in the input text
+fn find_most_occurrences(msg: &str) -> Vec<Node> {
+    let mut letter_occurrences: HashMap<char, i32> = HashMap::new();
 
     for l in msg.chars() {
-        let value = letter_occurences.get(&l.to_string()).unwrap_or(&0) + 1;
-        letter_occurences.insert(l.to_string(), value);
+        *letter_occurrences.entry(l).or_insert(0) += 1;
     }
 
-    let mut nodes = letter_occurences
+    let mut nodes: Vec<_> = letter_occurrences
         .iter()
-        .map(|(key, value)| Node {
-            data: Some(key.clone()),
-            occurence: *value,
+        .map(|(&key, &value)| Node {
+            data: Some(key.to_string()),
+            occurence: value,
             ..Default::default()
         })
-        .collect::<Vec<_>>();
-    nodes.sort_by(|a, b| a.occurence.cmp(&b.occurence));
+        .collect();
+    nodes.sort_by_key(|node| node.occurence);
     nodes
 }
 
+// Construct the Huffman tree from a sorted list of nodes
 fn make_huffman_tree(nodes: Vec<Node>) -> Node {
-    let mut tree: Option<Node> = None;
-    let mut i = 0;
-    while i < nodes.len() {
-        let left = nodes.get(i);
-        let right = nodes.get(i + 1);
+    let mut nodes = nodes;
 
-        let new_node = match (left, right) {
-            (Some(l), Some(r)) => l.add(Box::new(r.clone())),
-            _ => left.unwrap().clone(),
-        };
-
-        tree = if let Some(node) = tree {
-            Some(node.add(Box::new(new_node)))
-        } else {
-            Some(new_node)
-        };
-
-        i += 2;
+    while nodes.len() > 1 {
+        let left = nodes.remove(0);
+        let right = nodes.remove(0);
+        let new_node = Node::add(left, right);
+        nodes.push(new_node);
+        nodes.sort_by_key(|node| node.occurence);
     }
-    tree.unwrap_or_default()
+
+    nodes.pop().unwrap_or_default()
 }
 
-fn main() {
-    let mut out = file_reader("/mnt/d/Project/cmprs/message.txt");
-    let nodes = find_most_occurences(out.clone());
-    let tree = make_huffman_tree(nodes.clone());
+// Encode the input text using the Huffman tree
+fn encode_text(text: &str, tree: &Node) -> String {
+    let mut dictionary: HashMap<String, String> = HashMap::new();
 
-    for node in nodes.iter() {
-        let target = node.data.clone().unwrap();
+    for char in text.chars() {
+        let target = char.to_string();
         let code: String = tree
             .search(&target, &mut vec![])
             .unwrap()
             .iter()
-            .map(|v| v.to_string())
+            .map(|&b| b.to_string())
             .collect();
-        out = out.replace(&target, &code);
+        dictionary.insert(target, code);
     }
-    println!("{out}");
+
+    let mut result = String::new();
+
+    println!("{dictionary:#?}");
+
+    for char in text.chars() {
+        if let Some(code) = dictionary.get(&char.to_string()) {
+            result.push_str(code)
+        }
+    }
+
+    result
+}
+
+fn write_as_binary(input: &str, output_path: &str) -> Result<(), std::io::Error> {
+    let mut file = BufWriter::new(File::create(output_path)?);
+
+    for chunk in input.chars().collect::<Vec<_>>().chunks(8) {
+        let byte_str: String = chunk.iter().collect();
+        let byte = u8::from_str_radix(&byte_str, 2).map_err(|_| {
+            std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Invalid character found in code",
+            )
+        })?;
+        file.write_all(&[byte])?;
+    }
+
+    Ok(())
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        eprintln!("Usage: {} <input_file>", args[0]);
+        process::exit(1);
+    }
+
+    let input_file_path = &args[1];
+    let output_file_path = "/mnt/d/Project/cmprs/output.bin";
+
+    println!("Reading input file...");
+    let text = match file_reader(input_file_path) {
+        Ok(content) => content,
+        Err(err) => {
+            eprintln!("Error reading input file: {}", err);
+            return;
+        }
+    };
+
+    println!("Finding occurrences...");
+    let nodes = find_most_occurrences(&text);
+
+    println!("Building Huffman tree...");
+    let tree = make_huffman_tree(nodes);
+
+    println!("Encoding text...");
+    let encoded_text = encode_text(&text, &tree);
+
+    println!("Writing encoded data to file...");
+    if let Err(err) = write_as_binary(&encoded_text, output_file_path) {
+        eprintln!("Error writing encoded data to file: {}", err);
+        return;
+    }
+
+    println!("Compression completed successfully.");
 }
