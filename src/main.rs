@@ -3,6 +3,7 @@
  */
 mod node;
 
+use indicatif::ProgressBar;
 use node::Node;
 use std::{
     collections::HashMap,
@@ -153,7 +154,7 @@ fn load_tree(input_path: &str) -> Result<Node, std::io::Error> {
 }
 
 fn compress(input_file_path: &str) {
-    println!("Reading input file: {}", input_file_path);
+    let bar = ProgressBar::new(6);
     let text = match file_reader(input_file_path) {
         Ok(content) => content,
         Err(err) => {
@@ -161,34 +162,28 @@ fn compress(input_file_path: &str) {
             return;
         }
     };
-    println!("Input file read successfully.");
+    bar.inc(1);
 
-    println!("Finding occurrences of characters in the text.");
     let nodes = find_most_occurrences(&text);
-    println!("Occurrences found.");
+    bar.inc(1);
 
-    println!("Constructing Huffman tree.");
     let tree = make_huffman_tree(nodes);
-    println!("Huffman tree constructed.");
+    bar.inc(1);
 
-    // Save the tree as JSON
-    println!("Saving Huffman tree to file: {}", JSON_TREE);
     if let Err(err) = save_tree(&tree, JSON_TREE) {
         eprintln!("Error saving tree to file: {}", err);
         return;
     }
-    println!("Huffman tree saved successfully.");
+    bar.inc(1);
 
-    println!("Encoding text using the Huffman tree.");
     let encoded_text = encode_text(&text, &tree);
-    println!("Text encoded successfully.");
+    bar.inc(2);
 
-    println!("Writing encoded data to file: {}", OUTPUT);
     if let Err(err) = write_as_binary(&encoded_text, OUTPUT) {
         eprintln!("Error writing encoded data to file: {}", err);
-    } else {
-        println!("Encoded data written to file successfully.");
+        return;
     }
+    bar.finish();
 
     println!("Compression completed successfully.");
 }
@@ -219,7 +214,9 @@ fn decompress(input_file: &str) {
 
     let decoded_bits = decode_binary(&encoded_data);
     let output = decode_text(&decoded_bits, &tree);
-    save_string_to_file(&output, DECOMPRESS_PATH).unwrap();
+    if let Err(err) = save_string_to_file(&output, DECOMPRESS_PATH) {
+        eprintln!("Error saving file : {}", err);
+    };
 }
 
 fn main() {
