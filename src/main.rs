@@ -14,7 +14,7 @@ use std::{
 
 static OUTPUT: &'static str = "/mnt/d/Project/cmprs/output.bin";
 static JSON_TREE: &'static str = "/mnt/d/Project/cmprs/tree.json";
-static DECOMPRESS_PATH: &'static str = "/mnt/d/Project/cmprs/recompress.data";
+static DECOMPRESS_PATH: &'static str = "/mnt/d/Project/cmprs/decompress.data";
 
 fn file_reader(path: &str) -> Result<String, std::io::Error> {
     let file = File::open(path)?;
