@@ -1,9 +1,11 @@
-#[derive(Debug, Clone, Default)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Default, Deserialize, Serialize)]
 pub struct Node {
     pub left: Option<Box<Node>>,
     pub right: Option<Box<Node>>,
     pub data: Option<String>,
-    pub occurence: i32,
+    pub occurrence: i32,
 }
 
 impl Node {
@@ -12,7 +14,7 @@ impl Node {
             left: Some(Box::new(left.clone())),
             right: Some(Box::new(right.clone())),
             data: None,
-            occurence: left.occurence + right.occurence,
+            occurrence: left.occurrence + right.occurrence,
         }
     }
 
