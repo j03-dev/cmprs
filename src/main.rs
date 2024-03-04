@@ -10,6 +10,7 @@ use std::{
     env,
     fs::{write, File},
     io::{BufReader, BufWriter, Read, Write},
+    path::Path,
     process,
 };
 
@@ -153,6 +154,10 @@ fn load_tree(input_path: &str) -> Result<Node, std::io::Error> {
     Ok(decoded_tree)
 }
 
+fn file_size(path_file: &str) -> f64 {
+    Path::new(path_file).metadata().unwrap().len() as f64
+}
+
 fn compress(input_file_path: &str) {
     let bar = ProgressBar::new(6);
     let text = match file_reader(input_file_path) {
@@ -185,7 +190,12 @@ fn compress(input_file_path: &str) {
     }
     bar.finish();
 
+    let input_size = file_size(input_file_path);
+    let output_size = file_size(OUTPUT);
+    let compression_percentage = (1.0 - (output_size / input_size)) * 100.0;
+
     println!("Compression completed successfully.");
+    println!("Compression ratio: {:.2}%", compression_percentage);
 }
 
 fn save_string_to_file(data: &str, file_path: &str) -> Result<(), std::io::Error> {
