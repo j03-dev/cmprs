@@ -14,9 +14,7 @@ use std::{
     process,
 };
 
-static OUTPUT: &'static str = "/mnt/d/Project/cmprs/output.bin";
-static JSON_TREE: &'static str = "/mnt/d/Project/cmprs/tree.json";
-static DECOMPRESS_PATH: &'static str = "/mnt/d/Project/cmprs/decompress.data";
+static JSON_TREE: &str = "tree.json";
 
 fn file_reader(path: &str) -> Result<String, std::io::Error> {
     let file = File::open(path)?;
@@ -184,14 +182,19 @@ fn compress(input_file_path: &str) {
     let encoded_text = encode_text(&text, &tree);
     bar.inc(2);
 
-    if let Err(err) = write_as_binary(&encoded_text, OUTPUT) {
+    let output = {
+        let filename = input_file_path.split("/").last().unwrap_or("unknow");
+        format!("{filename}.cmprs")
+    };
+
+    if let Err(err) = write_as_binary(&encoded_text, &output) {
         eprintln!("Error writing encoded data to file: {}", err);
         return;
     }
     bar.finish();
 
     let input_size = file_size(input_file_path);
-    let output_size = file_size(OUTPUT);
+    let output_size = file_size(&output);
     let compression_percentage = (1.0 - (output_size / input_size)) * 100.0;
 
     println!("Compression completed successfully.");
@@ -222,9 +225,14 @@ fn decompress(input_file: &str) {
         }
     };
 
+    let decompress_path = {
+        let filename = input_file.split("/").last().unwrap_or("unknow");
+        format!("{filename}").replace(".cmprs", "")
+    };
+
     let decoded_bits = decode_binary(&encoded_data);
     let output = decode_text(&decoded_bits, &tree);
-    if let Err(err) = save_string_to_file(&output, DECOMPRESS_PATH) {
+    if let Err(err) = save_string_to_file(&output, &decompress_path) {
         eprintln!("Error saving file : {}", err);
     };
 }
