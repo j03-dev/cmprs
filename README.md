@@ -1,6 +1,4 @@
-**README.md**
-
-**CMPrs: A Huffman Coding Implementation**
+# CMPrs: A Huffman Coding Implementation
 
 **Introduction**
 
