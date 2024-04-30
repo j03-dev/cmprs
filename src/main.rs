@@ -183,7 +183,7 @@ fn compress(input_file_path: &str) {
     bar.inc(2);
 
     let output = {
-        let filename = input_file_path.split("/").last().unwrap_or("unknow");
+        let filename = input_file_path.split('/').last().unwrap_or("unknow");
         format!("{filename}.cmprs")
     };
 
@@ -226,8 +226,8 @@ fn decompress(input_file: &str) {
     };
 
     let decompress_path = {
-        let filename = input_file.split("/").last().unwrap_or("unknow");
-        format!("{filename}").replace(".cmprs", "")
+        let filename = input_file.split('/').last().unwrap_or("unknow");
+        filename.to_string().replace(".cmprs", "")
     };
 
     let decoded_bits = decode_binary(&encoded_data);
