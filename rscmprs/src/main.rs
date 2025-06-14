@@ -171,6 +171,7 @@ fn compress(input_file_path: &str) {
     bar.inc(1);
 
     let tree = make_huffman_tree(nodes);
+    println!("tree {:#?}", tree);
     bar.inc(1);
 
     if let Err(err) = save_tree(&tree, JSON_TREE) {
