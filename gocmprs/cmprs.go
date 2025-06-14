@@ -11,8 +11,7 @@ func pop[T interface{}](s []T) []T {
 	if len(s) == 0 {
 		return s
 	}
-	s = s[:len(s)-1]
-	return s
+	return s[:len(s)-1]
 }
 
 type Node struct {
@@ -145,7 +144,6 @@ func main() {
 	nodes := makeNodeFrom(text)
 	tree := makeHuffmanTree(nodes)
 	output := encodeText(text, tree)
-	fmt.Println(output)
 	saveFile(output)
 
 }
